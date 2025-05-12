@@ -281,6 +281,31 @@ impl<B: Buffer> IoUringBufRing<B> {
         })
     }
 
+    /// # Notes
+    ///
+    /// In almost all cases this __SHOULD NOT__ be used. One scenario that requires this would
+    /// be transferring data in a buffer between two file descriptors, where the corresponding
+    /// write for a read doesn't happen immediately after
+    ///
+    /// # Safety
+    ///
+    /// Caller must ensure that the [`BorrowedBuffer`] is dropped when they are done with it
+    pub unsafe fn get_buf_manually_dropped(
+        &self,
+        id: u16,
+        available_len: usize,
+    ) -> Option<ManuallyDrop<BorrowedBuffer<B>>> {
+        let buf = (*self.bufs.get()).get_mut(id as usize)?;
+        debug_assert!(available_len <= buf.len());
+
+        Some(ManuallyDrop::new(BorrowedBuffer {
+            buf,
+            len: available_len,
+            id,
+            buf_ring: self,
+        }))
+    }
+
     /// Get the buffer group id
     pub fn buffer_group(&self) -> u16 {
         self.buf_group
