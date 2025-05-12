@@ -261,6 +261,13 @@ impl<B: Buffer> IoUringBufRing<B> {
 
     /// # Safety
     ///
+    /// Caller must make sure the buffers have already been initialized
+    pub unsafe fn buffer_count(&self) -> usize {
+        (*self.bufs.get()).len()
+    }
+
+    /// # Safety
+    ///
     /// Caller must make sure there is only one [`BorrowedBuffer`] with the `id` at the same time.
     pub unsafe fn get_buf(&self, id: u16, available_len: usize) -> Option<BorrowedBuffer<B>> {
         let buf = (*self.bufs.get()).get_mut(id as usize)?;
